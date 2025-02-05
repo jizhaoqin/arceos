@@ -5,7 +5,7 @@ on: [push, pull_request]
 env:
   qemu-version: 9.2.1
   rust-toolchain: nightly-2025-05-20
-  arceos-apps: 'c8d8fe4'
+  arceos-apps: '5cd604c'
 
 jobs:
   unit-test:
