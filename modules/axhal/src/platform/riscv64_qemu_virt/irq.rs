@@ -47,16 +47,21 @@ pub fn set_enable(scause: usize, _enabled: bool) {
 /// It also enables the IRQ if the registration succeeds. It returns `false` if
 /// the registration failed.
 pub fn register_handler(scause: usize, handler: IrqHandler) -> bool {
-    with_cause!(
-        scause,
-        @TIMER => if !TIMER_HANDLER.is_inited() {
-            TIMER_HANDLER.init_once(handler);
-            true
-        } else {
-            false
-        },
-        @EXT => crate::irq::register_handler_common(scause & !INTC_IRQ_BASE, handler),
-    )
+    match scause {
+        S_TIMER => {
+            axlog::ax_println!("--------------riscv irq register timer handler here-----------------");
+            if !TIMER_HANDLER.is_inited() {
+                axlog::ax_println!("--------------timer handler init success-----------------");
+                TIMER_HANDLER.init_once(handler);
+                true
+            } else {
+                axlog::ax_println!("--------------timer handler init fail-----------------");
+                false
+            }
+        }
+        S_EXT => crate::irq::register_handler_common(scause & !INTC_IRQ_BASE, handler),
+        _ => panic!("invalid trap cause: {:#x}", scause),
+    }
 }
 
 /// Dispatches the IRQ.

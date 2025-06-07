@@ -52,6 +52,8 @@ pub fn set_enable(vector: usize, enabled: bool) {
 /// the registration failed.
 #[cfg(feature = "irq")]
 pub fn register_handler(vector: usize, handler: crate::irq::IrqHandler) -> bool {
+    axlog::ax_println!("--------------x86 64 irq register handler here---------------------");
+
     crate::irq::register_handler_common(vector, handler)
 }
 
