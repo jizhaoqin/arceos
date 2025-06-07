@@ -27,7 +27,10 @@ pub(crate) fn dispatch_irq_common(irq_num: usize) {
 /// the registration failed.
 #[allow(dead_code)]
 pub(crate) fn register_handler_common(irq_num: usize, handler: IrqHandler) -> bool {
+    // axlog::ax_println!("--------------------external irq register here----------------------------");
     if irq_num < MAX_IRQ_COUNT && IRQ_HANDLER_TABLE.register_handler(irq_num, handler) {
+        // 看看都注册了哪些handler
+        axlog::ax_println!("irq number: {irq_num}");
         set_enable(irq_num, true);
         return true;
     }

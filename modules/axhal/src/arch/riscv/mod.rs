@@ -15,6 +15,7 @@ pub use self::context::{GeneralRegisters, TaskContext, TrapFrame};
 /// Allows the current CPU to respond to interrupts.
 #[inline]
 pub fn enable_irqs() {
+    axlog::ax_println!("--------------irq enable here---------------------");
     unsafe { sstatus::set_sie() }
 }
 

@@ -254,6 +254,9 @@ fn init_interrupt() {
         axhal::time::set_oneshot_timer(deadline);
     }
 
+    axlog::ax_println!("--------------irq init here---------------------");
+
+    // 注册时钟中断
     axhal::irq::register_handler(TIMER_IRQ_NUM, || {
         update_timer();
         #[cfg(feature = "multitask")]
@@ -262,6 +265,7 @@ fn init_interrupt() {
 
     // Enable IRQs before starting app
     axhal::arch::enable_irqs();
+    axlog::ax_println!("--------------random stuff---------------------");
 }
 
 #[cfg(all(feature = "tls", not(feature = "multitask")))]
