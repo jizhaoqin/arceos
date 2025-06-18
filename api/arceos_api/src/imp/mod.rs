@@ -19,8 +19,13 @@ cfg_display! {
 mod stdio {
     use core::fmt;
 
+    /// read bytes
+    /// 
+    /// - from ulib::axstd::io::StdinRaw.read(buf)
     pub fn ax_console_read_bytes(buf: &mut [u8]) -> crate::AxResult<usize> {
+        // 调用硬件抽象层的read_bytes, 这里先看x86_64
         let len = axhal::console::read_bytes(buf);
+        // 把回车替换为换行
         for c in &mut buf[..len] {
             if *c == b'\r' {
                 *c = b'\n';

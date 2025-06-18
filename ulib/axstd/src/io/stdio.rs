@@ -8,11 +8,17 @@ struct StdinRaw;
 struct StdoutRaw;
 
 impl Read for StdinRaw {
-    // Non-blocking read, returns number of bytes read.
+    /// Non-blocking read, returns number of bytes read.
+    ///
+    /// - from Stdin.read(buf)
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut read_len = 0;
+
+        // shell传入的buf.len == 1
+        // 每次读数个字节, 直到把buf填满为止
         while read_len < buf.len() {
             let len = arceos_api::stdio::ax_console_read_bytes(buf[read_len..].as_mut())?;
+            // 如果第一次没有读到信息, 直接返回
             if len == 0 {
                 break;
             }
@@ -64,18 +70,28 @@ impl Stdin {
 }
 
 impl Read for Stdin {
-    // Block until at least one byte is read.
+    /// Block until at least one byte is read.
+    ///
+    /// - from shell/main.rs
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        // 第一次尝试读取
+        // 这里shell调用传入的buf长度为1, 只能读取一个字节
+        // 这里调用StdinRaw.read方法
         let read_len = self.inner.lock().read(buf)?;
+        // 如果长度为空或第一次就读到了东西则返回
         if buf.is_empty() || read_len > 0 {
             return Ok(read_len);
         }
+
+        // 如果首次没读到东西则:
         // try again until we got something
         loop {
             let read_len = self.inner.lock().read(buf)?;
             if read_len > 0 {
                 return Ok(read_len);
             }
+            // 这里每次循环没有读到输入就放弃线程, 也就是阻塞当前线程直到读到为止
+            // 所以理论上当前线程如果没有输入就不会做任何事
             crate::thread::yield_now();
         }
     }
@@ -149,6 +165,17 @@ impl Write for StdoutLock<'_> {
 }
 
 /// Constructs a new handle to the standard input of the current process.
+///
+/// - 对比rust标准库实现
+/// ```no_run
+/// pub fn stdin() -> Stdin {
+///     static INSTANCE: OnceLock<Mutex<BufReader<StdinRaw>>> = OnceLock::new();
+///     Stdin {
+///         inner: INSTANCE.get_or_init(|| {
+///             Mutex::new(BufReader::with_capacity(stdio::STDIN_BUF_SIZE, stdin_raw()))
+///         }),
+///     }
+/// ```
 pub fn stdin() -> Stdin {
     static INSTANCE: Mutex<BufReader<StdinRaw>> = Mutex::new(BufReader::new(StdinRaw));
     Stdin { inner: &INSTANCE }

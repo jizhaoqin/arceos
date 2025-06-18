@@ -15,6 +15,7 @@ pub mod irq {
 }
 
 pub mod console {
+    // 将uart16550的东西重导出为console::*
     pub use super::uart16550::*;
 }
 
