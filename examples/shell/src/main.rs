@@ -40,18 +40,25 @@ fn print_prompt() {
 
 #[cfg_attr(feature = "axstd", unsafe(no_mangle))]
 fn main() {
+    // 调用ulib::axstd::io::stdin()
     let mut stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
 
+    // 此buffer储存从stdin得到的输入信息
     let mut buf = [0; MAX_CMD_LEN];
+    // 记录光标所在位置, 正常输出是右移, stdin获得特殊字符进行特殊移动
     let mut cursor = 0;
     cmd::run_cmd("help".as_bytes());
     print_prompt();
 
     loop {
+        // 这里的实现是一个线程阻塞io, 可以考虑修改为非阻塞io, 基于中断
+        // TODO: 但目前先不考虑修改, 而是看到底层究竟是什么硬件或中断来获得用户输入
+        // 一次只读取一个byte, 也就是一个u8 ascii码
         if stdin.read(&mut buf[cursor..cursor + 1]).ok() != Some(1) {
             continue;
         }
+
         if buf[cursor] == b'\x1b' {
             buf[cursor] = b'^';
         }

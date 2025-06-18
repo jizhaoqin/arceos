@@ -57,9 +57,9 @@ pub fn register_handler(vector: usize, handler: crate::irq::IrqHandler) -> bool 
     crate::irq::register_handler_common(vector, handler)
 }
 
-/// Dispatches the IRQ.
+/// Dispatches the IRQ. 中断处理转接, 根据中断编号vector查表调用中断处理函数
 ///
-/// This function is called by the common interrupt handler. It looks
+/// - This function is called by the common interrupt handler. It looks
 /// up in the IRQ handler table and calls the corresponding handler. If
 /// necessary, it also acknowledges the interrupt controller after handling.
 #[cfg(feature = "irq")]
@@ -88,6 +88,9 @@ fn cpu_has_x2apic() -> bool {
     }
 }
 
+/// APIC初始化
+/// 
+/// - APIC: 高级可编程中断控制器
 pub(super) fn init_primary() {
     info!("Initialize Local APIC...");
 

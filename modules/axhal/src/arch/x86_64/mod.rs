@@ -52,9 +52,12 @@ pub fn irqs_enabled() -> bool {
 /// Relaxes the current CPU and waits for interrupts.
 ///
 /// It must be called with interrupts enabled, otherwise it will never return.
+///
+/// - from arceos_api::imp::task::ax_yield_now()
 #[inline]
 pub fn wait_for_irqs() {
     if cfg!(target_os = "none") {
+        // x86_64指令, CPU进入低功耗的暂停状态，直到有中断发生
         unsafe { asm!("hlt") }
     } else {
         core::hint::spin_loop()
