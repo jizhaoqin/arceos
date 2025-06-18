@@ -6,7 +6,7 @@ pub fn ax_sleep_until(deadline: crate::time::AxTimeValue) {
 }
 
 /// thread yield
-/// 
+///
 /// - from axstd::io::Stdin.read()
 pub fn ax_yield_now() {
     // 如果启用多线程就调用这个
@@ -19,7 +19,7 @@ pub fn ax_yield_now() {
     if cfg!(feature = "irq") {
         // 如何启动irq则等待中断
         // 而目前的stdin得不到输入时会调用此函数
-        axhal::arch::wait_for_irqs();
+        axhal::asm::wait_for_irqs();
     } else {
         core::hint::spin_loop();
     }

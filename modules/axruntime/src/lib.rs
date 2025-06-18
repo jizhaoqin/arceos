@@ -264,7 +264,8 @@ fn init_interrupt() {
     });
 
     // Enable IRQs before starting app
-    axhal::arch::enable_irqs();
+    axhal::asm::enable_irqs();
+    // axhal::arch::enable_irqs();
     axlog::ax_println!("--------------random stuff---------------------");
 }
 
