@@ -55,14 +55,15 @@ pub fn set_enable(vector: usize, enabled: bool) {
     // should not affect LAPIC interrupts
     // TIMER iqr_num = 0xf0 = 15*16 = 240
     // 似乎其他自己注册的中断编号应该比240小
-
-    // 这里似乎timer的handler在LAPIC初始化的时候就已经启用了, 这里不需要再启用
     if vector < APIC_TIMER_VECTOR as _ {
         unsafe {
             // 使用IO_APIC实例启用或关闭对应irq
             if enabled {
+                axlog::ax_println!("enable {vector}");
+                // 到这里退出了
                 IO_APIC.lock().enable_irq(vector as u8);
             } else {
+                axlog::ax_println!("disable {vector}");
                 IO_APIC.lock().disable_irq(vector as u8);
             }
         }

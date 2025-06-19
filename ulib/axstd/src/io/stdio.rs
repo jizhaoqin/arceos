@@ -73,6 +73,7 @@ impl Read for Stdin {
     /// Block until at least one byte is read.
     ///
     /// - from shell/main.rs
+    /// - 阻塞轮询获取输入
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         // 第一次尝试读取
         // 这里shell调用传入的buf长度为1, 只能读取一个字节

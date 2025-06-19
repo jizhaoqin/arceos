@@ -1,10 +1,21 @@
 //! Uart 16550.
 
+// 需要这个启用alloc, 能默认调用的只有core
+extern crate alloc;
+
+use alloc::collections::VecDeque;
 use kspin::SpinNoIrq;
 use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 
 const UART_CLOCK_FACTOR: usize = 16;
 const OSC_FREQ: usize = 1_843_200;
+
+// COM1 => IRQ4
+const UART_IRQ_NUM: usize = 0x24;
+
+// UART16550 标准端口地址 (COM1)
+// const UART_BASE: PhysAddr = pa!(0x3F8);
+// const UART_IRQ_NUM: usize = 4; // COM1 IRQ
 
 /// from getchar()
 /// COM1.lock()时同时禁用内核抢占和中断
@@ -20,6 +31,9 @@ const OSC_FREQ: usize = 1_843_200;
 ///   COM4: 0x2E8  
 static COM1: SpinNoIrq<Uart16550> = SpinNoIrq::new(Uart16550::new(0x3f8));
 
+// 输入缓冲区
+static RECEIVE_BUFFER: SpinNoIrq<VecDeque<u8>> = SpinNoIrq::new(VecDeque::new());
+
 bitflags::bitflags! {
     /// Line status flags
     struct LineStsFlags: u8 {
@@ -33,10 +47,8 @@ bitflags::bitflags! {
 /// 创建一个串口
 ///
 /// - port: w/r
-
 struct Uart16550 {
     data: Port<u8>,
-    //
     int_en: PortWriteOnly<u8>,
     fifo_ctrl: PortWriteOnly<u8>,
     line_ctrl: PortWriteOnly<u8>,
@@ -46,7 +58,7 @@ struct Uart16550 {
 
 impl Uart16550 {
     const fn new(port: u16) -> Self {
-        // 这里COM1 port = 0x3f8
+        // 这里COM1 port的起始地址为0x3f8
         // (0x3f8..=0x3ff)即(0x3f8..=0x3f8+7)属于COM1串口serial port
         // 每个端口对应 16550 UART 兼容芯片的不同寄存器功能
         Self {
@@ -73,6 +85,9 @@ impl Uart16550 {
         unsafe {
             // Disable interrupts, 禁用中断
             self.int_en.write(0x00);
+
+            // 启用中断
+            // self.int_en.write(0x01);
 
             // Enable DLAB
             self.line_ctrl.write(0x80);
@@ -116,6 +131,7 @@ impl Uart16550 {
     /// - 而qemu则接受terminal输入模拟硬件行为
     /// - 这里并没有注册串口中断, 而是采用轮询的形式不断通过串口访问硬件
     /// TODO: 改为使用中断的形式, 在那之前尝试注册一个键盘中断试一试
+    /// - 键盘中断不再尝试, 兼容性不佳
     /// - 注意中断编号IRQ4或0x21与port端口编号是两回事
     /// - 这里用串口代替键盘, 这样就不需要键盘中断了, 因为在arceos看来根本没有键盘硬件, 只有qemu模拟的串口硬件
     /// - 用户的键盘由qemu映射称串口硬件了
@@ -148,6 +164,7 @@ fn putchar(c: u8) {
 /// - 这里调用 [`COM1`] 实例读取单个字符
 fn getchar() -> Option<u8> {
     COM1.lock().getchar()
+    // RECEIVE_BUFFER.lock().pop_front()
 }
 
 /// Write a slice of bytes to the console.
@@ -183,4 +200,24 @@ pub fn read_bytes(bytes: &mut [u8]) -> usize {
 /// 设置波特率为115200
 pub(super) fn init() {
     COM1.lock().init(115200);
+    #[cfg(feature = "irq")]
+    {
+        // 在platform初始化的时候注册uart中断控制器
+        // crate::irq::register_handler(UART_IRQ_NUM, uart_irq_handler);
+        // crate::irq::set_enable(UART_IRQ_NUM, true);
+    }
+}
+
+/// UART interrupt handler for x86_64
+///
+/// - 作用是把从串口设备读到的字符放到缓冲区里
+pub fn uart_irq_handler() {
+    let mut buffer = RECEIVE_BUFFER.lock();
+
+    axlog::ax_println!("handler trigered");
+    while let Some(c) = COM1.lock().getchar() {
+        if buffer.len() < 1024 {
+            buffer.push_back(c);
+        }
+    }
 }

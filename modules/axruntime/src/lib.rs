@@ -234,7 +234,6 @@ fn init_allocator() {
 
 #[cfg(feature = "irq")]
 fn init_interrupt() {
-    use axhal::irq::KEYBOARD_IRQ_NUM;
     use axhal::time::TIMER_IRQ_NUM;
 
     // Setup timer interrupt handler
@@ -263,19 +262,23 @@ fn init_interrupt() {
     // 对x86 APIC来说是irq_num是0xf0
     axhal::irq::register_handler(TIMER_IRQ_NUM, || {
         update_timer();
+        // axlog::ax_print!(".");
         #[cfg(feature = "multitask")]
         axtask::on_timer_tick();
     });
 
     // 注册键盘中断
-    // TODO: 现在注册到了IRQ_HANDLER_TABLE, 而IDT应该也已经注册了键盘处理函数了, 但是按键盘没打印提示,
-    // 应该是没有键盘设备也就没有键盘中断, 自然不会调用处理函数
+    // 现在注册到了IRQ_HANDLER_TABLE, 而IDT应该也已经注册了键盘处理函数了, 但是按键盘没打印提示,
+    // 这是因为qemu没有模拟键盘设备也就没有键盘中断, 自然不会调用处理函数
     // 而我的输入之所以能输出是因为shell调用Stdin轮询qemu提供的串口设备, 既不是键盘, 也不是中断
-    // 注意arceos直接的环境是qemu模拟的硬件, 我按的键盘似乎被qemu解读为串口设备输出了
-    fn keyboard_irq_handler() {
-        axlog::ax_print!("this is keyboard irq handler");
-    }
-    axhal::irq::register_handler(KEYBOARD_IRQ_NUM, keyboard_irq_handler);
+    // 注意arceos直接的环境是qemu模拟的硬件, 我按的键盘是被qemu解读为串口设备输出了
+    // fn keyboard_irq_handler() {
+    //     axlog::ax_print!(".");
+    // }
+    // axhal::irq::register_handler(0x21, keyboard_irq_handler);
+
+    // 尝试注册uart中断
+    // axhal::irq::register_handler(33, axhal::irq::uart_irq_handler);
 
     // Enable IRQs before starting app
     axhal::arch::enable_irqs();
