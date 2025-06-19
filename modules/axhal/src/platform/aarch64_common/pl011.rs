@@ -1,5 +1,8 @@
 //! PL011 UART.
 
+extern crate alloc;
+
+use alloc::collections::VecDeque;
 use arm_pl011::Pl011Uart;
 use kspin::SpinNoIrq;
 use memory_addr::PhysAddr;
@@ -10,6 +13,9 @@ const UART_BASE: PhysAddr = pa!(axconfig::devices::UART_PADDR);
 
 static UART: SpinNoIrq<Pl011Uart> =
     SpinNoIrq::new(Pl011Uart::new(phys_to_virt(UART_BASE).as_mut_ptr()));
+
+// 输入缓冲区
+static RECEIVE_BUFFER: SpinNoIrq<VecDeque<u8>> = SpinNoIrq::new(VecDeque::new());
 
 /// Writes a byte to the console.
 pub fn putchar(c: u8) {
@@ -24,8 +30,11 @@ pub fn putchar(c: u8) {
 }
 
 /// Reads a byte from the console, or returns [`None`] if no input is available.
+/// 
+/// - 成功基于中断实现获取串口输入
 fn getchar() -> Option<u8> {
-    UART.lock().getchar()
+    // UART.lock().getchar()
+    RECEIVE_BUFFER.lock().pop_front()
 }
 
 /// Write a slice of bytes to the console.
@@ -37,6 +46,8 @@ pub fn write_bytes(bytes: &[u8]) {
 
 /// Reads bytes from the console into the given mutable slice.
 /// Returns the number of bytes read.
+/// 
+/// - 调用getchar()
 pub fn read_bytes(bytes: &mut [u8]) -> usize {
     let mut read_len = 0;
     while read_len < bytes.len() {
@@ -58,16 +69,25 @@ pub fn init_early() {
 /// Set UART IRQ Enable
 pub fn init() {
     #[cfg(feature = "irq")]
-    crate::irq::set_enable(crate::platform::irq::UART_IRQ_NUM, true);
+    crate::irq::register_handler(crate::platform::irq::UART_IRQ_NUM, uart_irq_handler);
 }
 
 /// UART IRQ Handler
-pub fn handle() {
+///
+/// - 作用是把从串口设备读到的字符放到缓冲区里
+/// TODO: 异步化此中断处理函数
+pub fn uart_irq_handler() {
+    // axlog::ax_print!("uart irq triggered");
     let is_receive_interrupt = UART.lock().is_receive_interrupt();
     UART.lock().ack_interrupts();
     if is_receive_interrupt {
-        while let Some(c) = getchar() {
-            putchar(c);
+        let mut buffer = RECEIVE_BUFFER.lock();
+        while let Some(c) = UART.lock().getchar() {
+            // 这里暂时给缓冲区设置一个长度
+            if buffer.len() < 1024 {
+                buffer.push_back(c);
+            }
+            // putchar(c);
         }
     }
 }

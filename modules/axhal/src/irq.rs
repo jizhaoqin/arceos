@@ -6,7 +6,6 @@ use crate::platform::irq::{MAX_IRQ_COUNT, dispatch_irq};
 use crate::trap::{IRQ, register_trap_handler};
 
 // from axruntime::init_interrupt()
-pub use crate::platform::irq::KEYBOARD_IRQ_NUM;
 pub use crate::platform::irq::{register_handler, set_enable};
 
 /// The type if an IRQ handler.
