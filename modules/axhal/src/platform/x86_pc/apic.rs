@@ -16,6 +16,8 @@ pub(super) mod vectors {
     pub const APIC_TIMER_VECTOR: u8 = 0xf0;
     pub const APIC_SPURIOUS_VECTOR: u8 = 0xf1;
     pub const APIC_ERROR_VECTOR: u8 = 0xf2;
+    // 键盘中断vector
+    // pub const APIC_KEYBOARD_VEVTOR: u8 = 0x21;
 }
 
 /// The maximum number of IRQs.
@@ -24,19 +26,40 @@ pub const MAX_IRQ_COUNT: usize = 256;
 /// The timer IRQ number.
 pub const TIMER_IRQ_NUM: usize = APIC_TIMER_VECTOR as usize;
 
+// 键盘中断vector
+pub const KEYBOARD_IRQ_NUM: usize = 0x21;
+
 const IO_APIC_BASE: PhysAddr = pa!(0xFEC0_0000);
 
+/// 属于CPU核心
+///
+/// - 每个核心只有有一个
+/// - 主要功能是处理CPU接受到的中断, 可能是处理器间中断(IPI), 也可能来自IoApic
 static LOCAL_APIC: SyncUnsafeCell<MaybeUninit<LocalApic>> =
     SyncUnsafeCell::new(MaybeUninit::uninit());
+
 static mut IS_X2APIC: bool = false;
+
+/// 全局静态IO_APIC实例, 不属于CPU核心
+///
+/// - 可以有多个, 这里只设置了1个
+/// - 主要负责收集和路由CPU外部中断, 决定目标处理CPU(如果有多个核心), 发送给目标CPU的LocalApic
 static IO_APIC: LazyInit<SpinNoIrq<IoApic>> = LazyInit::new();
 
 /// Enables or disables the given IRQ.
+///
+/// - from register_handler_common(irq_num, handler)
+/// - 启用对应编号irq_num的中断
 #[cfg(feature = "irq")]
 pub fn set_enable(vector: usize, enabled: bool) {
     // should not affect LAPIC interrupts
+    // TIMER iqr_num = 0xf0 = 15*16 = 240
+    // 似乎其他自己注册的中断编号应该比240小
+
+    // 这里似乎timer的handler在LAPIC初始化的时候就已经启用了, 这里不需要再启用
     if vector < APIC_TIMER_VECTOR as _ {
         unsafe {
+            // 使用IO_APIC实例启用或关闭对应irq
             if enabled {
                 IO_APIC.lock().enable_irq(vector as u8);
             } else {
@@ -50,9 +73,13 @@ pub fn set_enable(vector: usize, enabled: bool) {
 ///
 /// It also enables the IRQ if the registration succeeds. It returns `false` if
 /// the registration failed.
+///
+/// - from axruntime::init_interrupt()
+/// - x86_64这里不需要额外的处理直接调用register_handler_common(irq_num, handler), riscv就需要
+/// - 不启用irq就不能注册中断处理函数
 #[cfg(feature = "irq")]
 pub fn register_handler(vector: usize, handler: crate::irq::IrqHandler) -> bool {
-    axlog::ax_println!("--------------x86 64 irq register handler here---------------------");
+    axlog::ax_println!("--------------x86_64 irq register handler here---------------------");
 
     crate::irq::register_handler_common(vector, handler)
 }
@@ -88,9 +115,10 @@ fn cpu_has_x2apic() -> bool {
     }
 }
 
-/// APIC初始化
-/// 
+/// x2APIC设备初始化
+///
 /// - APIC: 高级可编程中断控制器
+/// - x2APIC 是 x86 架构中高级可编程中断控制器 (APIC) 的扩展模式，相比传统 APIC 和 xAPIC 提供了显著改进
 pub(super) fn init_primary() {
     info!("Initialize Local APIC...");
 
@@ -100,6 +128,7 @@ pub(super) fn init_primary() {
         Port::<u8>::new(0xA1).write(0xff);
     }
 
+    // LocalApic初始化准备, 要求这些field定义
     let mut builder = LocalApicBuilder::new();
     builder
         .timer_vector(APIC_TIMER_VECTOR as _)
@@ -115,6 +144,7 @@ pub(super) fn init_primary() {
         builder.set_xapic_base(base_vaddr.as_usize() as u64);
     }
 
+    // 启用LocalApic并转移到全局静态变量中, 不需要irq条件
     let mut lapic = builder.build().unwrap();
     unsafe {
         lapic.enable();

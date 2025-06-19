@@ -53,6 +53,11 @@ unsafe extern "C" fn rust_entry_secondary(magic: usize) {
 }
 
 /// Initializes the platform devices for the primary CPU.
+/// 
+/// - from axruntime/lib.rs: 151
+/// - 这里初始化一些设备, 这里只有中断控制器和计时器
+/// - 中断控制器虽然初始化了但没有启用, 需要irq条件编译启用才能注册自定义中断处理函数
+/// - 启用irq时自定义的timer处理函数似乎把time::init_primary()中的处理给覆盖了
 pub fn platform_init() {
     self::apic::init_primary();
     self::time::init_primary();

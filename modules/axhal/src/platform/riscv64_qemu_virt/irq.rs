@@ -46,6 +46,8 @@ pub fn set_enable(scause: usize, _enabled: bool) {
 ///
 /// It also enables the IRQ if the registration succeeds. It returns `false` if
 /// the registration failed.
+/// 
+/// - 需要额外的处理
 pub fn register_handler(scause: usize, handler: IrqHandler) -> bool {
     match scause {
         S_TIMER => {

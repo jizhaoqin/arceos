@@ -80,10 +80,16 @@ pub(super) fn init_early() {
     }
 }
 
+/// 计时器设备初始化
+/// 
+/// - from super::platform_init()
+/// - 发现如果不启用irq这个初始化不做任何事
 pub(super) fn init_primary() {
     #[cfg(feature = "irq")]
     unsafe {
         use x2apic::lapic::{TimerDivide, TimerMode};
+
+        // 启用irq时, 这里自动启用LocalApic的timer中断
         let lapic = super::apic::local_apic();
         lapic.set_timer_mode(TimerMode::OneShot);
         lapic.set_timer_divide(TimerDivide::Div256); // indeed it is Div1, the name is confusing.
