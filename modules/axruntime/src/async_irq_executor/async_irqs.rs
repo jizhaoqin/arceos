@@ -25,7 +25,7 @@ pub fn init_async_irq_system() {
             executor.spawn(Task::new(async_uart_handler()));
             executor.run();
         },
-        "async-executor".to_string(),
+        "async-irq-executor".to_string(),
         0x4000, // 16KB stack
     );
 }
@@ -48,13 +48,22 @@ async fn example_task() {
 /// - 执行器初始化的时候加入此future时, 会poll一次, 因为这不是由中断引起的
 /// - 在这首次poll的时候, 会由执行器新建并传入包含执行器信息的waker, 之后这个future就一直在pending
 pub async fn async_uart_handler() {
-    let mut uart_stream = UartStream::new();
+    // #[cfg(target_arch = "aarch64")]
+    use axhal::console::RECEIVE_BUFFER;
 
     // println!("poll print_key_presses()");
 
+    let mut uart_stream = UartStream::new();
+
     // .await这里相当于poll了scan_codes.next()这个future, 也传入了context信息
-    while let Some(_char) = uart_stream.next().await {
-        axlog::ax_print!("async uart handler triggered");
+    while let Some(byte) = uart_stream.next().await {
+        let mut buffer = RECEIVE_BUFFER.lock();
+
+        // 这里暂时给缓冲区设置一个长度
+        if buffer.len() < 1024 {
+            buffer.push_back(byte);
+        }
+        // axlog::ax_print!("async uart handler triggered");
     }
 }
 

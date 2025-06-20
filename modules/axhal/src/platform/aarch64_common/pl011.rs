@@ -15,7 +15,7 @@ static UART: SpinNoIrq<Pl011Uart> =
     SpinNoIrq::new(Pl011Uart::new(phys_to_virt(UART_BASE).as_mut_ptr()));
 
 // 输入缓冲区
-static RECEIVE_BUFFER: SpinNoIrq<VecDeque<u8>> = SpinNoIrq::new(VecDeque::new());
+pub static RECEIVE_BUFFER: SpinNoIrq<VecDeque<u8>> = SpinNoIrq::new(VecDeque::new());
 
 /// Writes a byte to the console.
 pub fn putchar(c: u8) {
@@ -82,12 +82,8 @@ pub fn uart_irq_handler() {
     let is_receive_interrupt = UART.lock().is_receive_interrupt();
     UART.lock().ack_interrupts();
     if is_receive_interrupt {
-        let mut buffer = RECEIVE_BUFFER.lock();
         while let Some(c) = UART.lock().getchar() {
-            // 这里暂时给缓冲区设置一个长度
-            if buffer.len() < 1024 {
-                buffer.push_back(c);
-            }
+            crate::async_irqs::add_uart_data(c);
             // putchar(c);
         }
     }
