@@ -5,15 +5,12 @@
 extern crate alloc;
 
 use super::Task;
-use conquer_once::spin::OnceCell;
 use core::pin::Pin;
 use core::task::{Context, Poll};
 use crossbeam_queue::ArrayQueue;
 use futures_util::stream::{Stream, StreamExt};
-use futures_util::task::AtomicWaker;
 
-static UART_RECEIVE_QUEUE: OnceCell<ArrayQueue<u8>> = OnceCell::uninit();
-static WAKER: AtomicWaker = AtomicWaker::new();
+use axhal::async_irqs::{UART_RECEIVE_QUEUE, WAKER};
 
 // #[cfg(feature = "multitask")]
 pub fn init_async_irq_system() {
@@ -31,27 +28,6 @@ pub fn init_async_irq_system() {
         "async-executor".to_string(),
         0x4000, // 16KB stack
     );
-}
-
-/// 由axhal::...::uart_irq_handler()调用
-///
-/// - 这里是中断上下文, 所以must not block or allocate
-/// - 这里把uart_data加入异步流[`Stream`]
-/// - 最后唤醒异步执行器尝试进行处理
-pub fn add_uart_data(byte: u8) {
-    if let Ok(queue) = UART_RECEIVE_QUEUE.try_get() {
-        if queue.push(byte).is_err() {
-            axlog::ax_println!("WARNING: UART_RECEIVE_QUEUE full; dropping keyboard input");
-        } else {
-            // 中断处理的最后执行唤醒操作
-            // 具体逻辑是从virtual table调用了我们通过impl Wake for TaskWaker传入的函数
-            // 效果是将print_key_presses()的id重新加入所属执行器的task_queue
-            // 之后执行器将poll print_key_presses(), 进入函数体打印字符
-            WAKER.wake();
-        }
-    } else {
-        axlog::ax_println!("WARNING: UART_RECEIVE_QUEUE uninitialized");
-    }
 }
 
 async fn async_number() -> u32 {

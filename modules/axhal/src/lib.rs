@@ -38,6 +38,10 @@ extern crate memory_addr;
 
 mod platform;
 
+// irq async executor
+// #[cfg(feature = "multitask")]
+pub mod async_irqs;
+
 #[macro_use]
 pub mod trap;
 
