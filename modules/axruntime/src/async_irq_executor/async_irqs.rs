@@ -1,10 +1,5 @@
 #![allow(dead_code)]
 
-//! modules/axhal/src/async_irq.rs
-
-extern crate alloc;
-
-use super::Task;
 use core::pin::Pin;
 use core::task::{Context, Poll};
 use crossbeam_queue::ArrayQueue;
@@ -12,8 +7,11 @@ use futures_util::stream::{Stream, StreamExt};
 
 use axhal::async_irqs::{UART_RECEIVE_QUEUE, WAKER};
 
-// #[cfg(feature = "multitask")]
+#[cfg(feature = "multitask")]
 pub fn init_async_irq_system() {
+    extern crate alloc;
+
+    use super::Task;
     use alloc::string::ToString;
 
     // 创建内核线程, 运行异步执行器, 理论上永远不会退出
@@ -31,7 +29,7 @@ pub fn init_async_irq_system() {
 }
 
 async fn async_number() -> u32 {
-    42
+    10000
 }
 
 async fn example_task() {

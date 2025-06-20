@@ -42,6 +42,5 @@ percpu          = { version = "0.2", optional = true }
 kernel_guard    = { version = "0.1", optional = true }
 
 chrono          = { version = "0.4.38", default-features = false }
-conquer-once    = { version = "0.4", default-features = false }
 crossbeam-queue = { version = "0.3", default-features = false, features = ["alloc"] }
 futures-util    = { version = "0.3", default-features = false, features = ["alloc"] }

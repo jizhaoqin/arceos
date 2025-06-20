@@ -579,7 +579,6 @@ dependencies = [
  "axnet",
  "axtask",
  "chrono",
- "conquer-once",
  "crate_interface",
  "crossbeam-queue",
  "ctor_bare",
