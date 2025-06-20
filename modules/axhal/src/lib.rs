@@ -40,7 +40,7 @@ mod platform;
 
 // irq async executor
 // #[cfg(feature = "multitask")]
-pub mod async_irqs;
+pub mod notify_async_irq_handler;
 
 #[macro_use]
 pub mod trap;

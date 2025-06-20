@@ -1,10 +1,10 @@
+pub mod async_uart_irq;
 pub mod executor;
-// #[cfg(feature = "irq")]
-pub mod async_irqs;
 
 extern crate alloc;
 
 use alloc::boxed::Box;
+use alloc::string::ToString;
 use core::fmt::Debug;
 use core::sync::atomic::{AtomicU64, Ordering};
 use core::task::{Context, Poll};
@@ -36,4 +36,29 @@ impl TaskId {
         static NEXT_ID: AtomicU64 = AtomicU64::new(0);
         TaskId(NEXT_ID.fetch_add(1, Ordering::Relaxed))
     }
+}
+
+/// 中断处理异步运行时
+/// 
+/// - 创建线程, 运行异步执行器, 理论上永远不会退出
+pub fn init_async_irq_runtime() {
+    axtask::spawn_raw(
+        move || {
+            let mut executor = executor::Executor::new();
+            executor.spawn(Task::new(async_uart_irq::async_uart_handler()));
+            executor.run();
+        },
+        "async-irq-runtime".to_string(),
+        0x4000, // 16KB stack
+    );
+}
+
+async fn async_number() -> u32 {
+    10000
+}
+
+/// 示例异步程序
+async fn example_task() {
+    let number = async_number().await;
+    axlog::ax_print!("async number: {}", number);
 }

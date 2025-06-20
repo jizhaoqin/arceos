@@ -36,11 +36,10 @@ pub(crate) fn dispatch_irq_common(irq_num: usize) {
 pub(crate) fn register_handler_common(irq_num: usize, handler: IrqHandler) -> bool {
     // 在架构无关的IRQ_HANDLER_TABLE处注册处理函数后, 之后遇到中断就可以查表调用函数处理了
     if irq_num < MAX_IRQ_COUNT && IRQ_HANDLER_TABLE.register_handler(irq_num, handler) {
-        // 看看都注册了哪些handler
-        axlog::ax_println!("irq number registerd: {irq_num}");
-
         // 启用对应编号irq_num的中断
         set_enable(irq_num, true);
+
+        info!("注册启用中断成功, 中断编号: {irq_num}, UART interrupt handler");
         return true;
     }
     warn!("register handler for IRQ {} failed", irq_num);

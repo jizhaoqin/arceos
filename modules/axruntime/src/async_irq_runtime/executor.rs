@@ -136,8 +136,7 @@ impl Executor {
     pub fn run(&mut self) {
         loop {
             self.run_ready_tasks();
-            self.sleep_if_idle();
-            // axlog::ax_print!(".");
+            self.yield_if_idle();
         }
     }
 
@@ -145,7 +144,7 @@ impl Executor {
     ///
     /// - 之后如果所有任务都在pending, 那么大部分时间都会在执行这个idle函数
     /// - 如果有其他的任务要执行, 比如说在其他线程, 可以在这里yield
-    fn sleep_if_idle(&self) {
+    fn yield_if_idle(&self) {
         // task_queue为空说明目前不需要轮询, 可以yield此线程
         if self.task_queue.is_empty() {
             axtask::yield_now();

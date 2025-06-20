@@ -66,25 +66,26 @@ pub fn init_early() {
     UART.lock().init();
 }
 
-/// Set UART IRQ Enable
+/// 注册uart中断处理函数
+///
+/// - register_handler(vector, handler)会自动启用中断
 pub fn init() {
     #[cfg(feature = "irq")]
-    crate::irq::register_handler(crate::platform::irq::UART_IRQ_NUM, uart_irq_handler);
+    crate::irq::register_handler(super::gic::UART_IRQ_NUM, uart_irq_handler);
 }
 
 /// UART IRQ Handler
 ///
-/// - 作用是把从串口设备读到的字符放到缓冲区里
-/// TODO: 异步化此中断处理函数
-/// - 调用axruntime::async_irqs::add_uart_data(data)
+/// - 此函数注册在中断向量表中
+/// - 作用是把从串口设备读到的byte传递给notify_async_uart_irq_handler(byte)
+/// - 然后立即返回
 pub fn uart_irq_handler() {
-    // axlog::ax_print!("uart irq triggered");
     let is_receive_interrupt = UART.lock().is_receive_interrupt();
     UART.lock().ack_interrupts();
     if is_receive_interrupt {
-        while let Some(c) = UART.lock().getchar() {
-            crate::async_irqs::add_uart_data(c);
-            // putchar(c);
+        // info!("uart irq received");
+        while let Some(byte) = UART.lock().getchar() {
+            crate::notify_async_irq_handler::notify_async_uart_irq_handler(byte);
         }
     }
 }
