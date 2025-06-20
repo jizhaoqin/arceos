@@ -22,6 +22,10 @@
 #[macro_use]
 extern crate axlog;
 
+// irq async executor
+// #[cfg(feature = "multitask")]
+pub mod async_irq_executor;
+
 #[cfg(all(target_os = "none", not(test)))]
 mod lang_items;
 
@@ -177,6 +181,9 @@ pub extern "C" fn rust_main(cpu_id: usize, dtb: usize) -> ! {
         init_interrupt();
     }
 
+    // #[cfg(all(feature = "irq", feature= "multitask"))]
+    crate::async_irq_executor::async_irqs::init_async_irq_system();
+
     #[cfg(all(feature = "tls", not(feature = "multitask")))]
     {
         info!("Initialize thread local storage...");
@@ -192,7 +199,10 @@ pub extern "C" fn rust_main(cpu_id: usize, dtb: usize) -> ! {
         core::hint::spin_loop();
     }
 
+    info!("before main() called");
     unsafe { main() };
+
+    info!("after main() called");
 
     #[cfg(feature = "multitask")]
     axtask::exit(0);

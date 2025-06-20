@@ -6,11 +6,10 @@ pub fn ax_sleep_until(deadline: crate::time::AxTimeValue) {
 }
 
 /// thread yield
-/// 
+///
 /// - from axstd::io::Stdin.read()
 pub fn ax_yield_now() {
     // 如果启用多线程就调用这个
-    // TODO: 先不管这个
     #[cfg(feature = "multitask")]
     axtask::yield_now();
 

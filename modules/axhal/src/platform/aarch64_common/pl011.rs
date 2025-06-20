@@ -30,7 +30,7 @@ pub fn putchar(c: u8) {
 }
 
 /// Reads a byte from the console, or returns [`None`] if no input is available.
-/// 
+///
 /// - 成功基于中断实现获取串口输入
 fn getchar() -> Option<u8> {
     // UART.lock().getchar()
@@ -46,7 +46,7 @@ pub fn write_bytes(bytes: &[u8]) {
 
 /// Reads bytes from the console into the given mutable slice.
 /// Returns the number of bytes read.
-/// 
+///
 /// - 调用getchar()
 pub fn read_bytes(bytes: &mut [u8]) -> usize {
     let mut read_len = 0;
@@ -76,6 +76,7 @@ pub fn init() {
 ///
 /// - 作用是把从串口设备读到的字符放到缓冲区里
 /// TODO: 异步化此中断处理函数
+/// - 调用axruntime::async_irqs::add_uart_data(data)
 pub fn uart_irq_handler() {
     // axlog::ax_print!("uart irq triggered");
     let is_receive_interrupt = UART.lock().is_receive_interrupt();

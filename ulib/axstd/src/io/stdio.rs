@@ -15,7 +15,6 @@ impl Read for StdinRaw {
         let mut read_len = 0;
 
         // shell传入的buf.len == 1
-        // 每次读数个字节, 直到把buf填满为止
         while read_len < buf.len() {
             let len = arceos_api::stdio::ax_console_read_bytes(buf[read_len..].as_mut())?;
             // 如果第一次没有读到信息, 直接返回

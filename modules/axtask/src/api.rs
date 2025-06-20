@@ -178,6 +178,8 @@ pub fn set_current_affinity(cpumask: AxCpuMask) -> bool {
 
 /// Current task gives up the CPU time voluntarily, and switches to another
 /// ready task.
+///
+/// - from arceos_api::ax_yield_now() [multitasking]
 pub fn yield_now() {
     current_run_queue::<NoPreemptIrqSave>().yield_current()
 }

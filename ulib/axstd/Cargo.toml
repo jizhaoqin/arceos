@@ -29,24 +29,24 @@ fp_simd = ["axfeat/fp_simd"]
 irq = ["arceos_api/irq", "axfeat/irq"]
 
 # Memory
-alloc = ["arceos_api/alloc", "axfeat/alloc", "axio/alloc"]
-alloc-tlsf = ["axfeat/alloc-tlsf"]
-alloc-slab = ["axfeat/alloc-slab"]
-alloc-buddy = ["axfeat/alloc-buddy"]
-page-alloc-64g = ["axfeat/page-alloc-64g"] # Support up to 64G memory capacity
-page-alloc-4g = ["axfeat/page-alloc-4g"] # Support up to 4G memory capacity
-paging = ["axfeat/paging"]
-dma = ["arceos_api/dma", "axfeat/dma"]
-tls = ["axfeat/tls"]
+alloc          = ["arceos_api/alloc", "axfeat/alloc", "axio/alloc"]
+alloc-tlsf     = ["axfeat/alloc-tlsf"]
+alloc-slab     = ["axfeat/alloc-slab"]
+alloc-buddy    = ["axfeat/alloc-buddy"]
+page-alloc-64g = ["axfeat/page-alloc-64g"]                          # Support up to 64G memory capacity
+page-alloc-4g  = ["axfeat/page-alloc-4g"]                           # Support up to 4G memory capacity
+paging         = ["axfeat/paging"]
+dma            = ["arceos_api/dma", "axfeat/dma"]
+tls            = ["axfeat/tls"]
 
 # Multi-threading and scheduler
-multitask = ["arceos_api/multitask", "axfeat/multitask"]
+multitask  = ["arceos_api/multitask", "axfeat/multitask"]
 sched_fifo = ["axfeat/sched_fifo"]
-sched_rr = ["axfeat/sched_rr"]
-sched_cfs = ["axfeat/sched_cfs"]
+sched_rr   = ["axfeat/sched_rr"]
+sched_cfs  = ["axfeat/sched_cfs"]
 
 # File system
-fs = ["arceos_api/fs", "axfeat/fs"]
+fs   = ["arceos_api/fs", "axfeat/fs"]
 myfs = ["arceos_api/myfs", "axfeat/myfs"]
 
 # Networking
@@ -60,24 +60,24 @@ display = ["arceos_api/display", "axfeat/display"]
 rtc = ["axfeat/rtc"]
 
 # Device drivers
-bus-mmio = ["axfeat/bus-mmio"]
-bus-pci = ["axfeat/bus-pci"]
-driver-ramdisk = ["axfeat/driver-ramdisk"]
-driver-ixgbe = ["axfeat/driver-ixgbe"]
-driver-fxmac = ["axfeat/driver-fxmac"]
+bus-mmio             = ["axfeat/bus-mmio"]
+bus-pci              = ["axfeat/bus-pci"]
+driver-ramdisk       = ["axfeat/driver-ramdisk"]
+driver-ixgbe         = ["axfeat/driver-ixgbe"]
+driver-fxmac         = ["axfeat/driver-fxmac"]
 driver-bcm2835-sdhci = ["axfeat/driver-bcm2835-sdhci"]
 
 # Logging
-log-level-off = ["axfeat/log-level-off"]
+log-level-off   = ["axfeat/log-level-off"]
 log-level-error = ["axfeat/log-level-error"]
-log-level-warn = ["axfeat/log-level-warn"]
-log-level-info = ["axfeat/log-level-info"]
+log-level-warn  = ["axfeat/log-level-warn"]
+log-level-info  = ["axfeat/log-level-info"]
 log-level-debug = ["axfeat/log-level-debug"]
 log-level-trace = ["axfeat/log-level-trace"]
 
 [dependencies]
-axfeat = { workspace = true }
+axfeat     = { workspace = true }
 arceos_api = { workspace = true }
-axio = "0.1"
-axerrno = "0.1"
-kspin = "0.1"
+axio       = "0.1"
+axerrno    = "0.1"
+kspin      = "0.1"

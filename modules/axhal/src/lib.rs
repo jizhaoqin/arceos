@@ -42,6 +42,9 @@ mod platform;
 pub mod trap;
 
 pub mod arch;
+// irq async executor
+// #[cfg(feature = "multitask")]
+// pub mod async_irq_executor;
 pub mod cpu;
 pub mod mem;
 pub mod time;
